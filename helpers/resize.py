@@ -2,10 +2,7 @@ import cv2
 
 
 def ResizeWithAspectRatio(img, target_w, target_h):
-    doc_h, doc_w = img.shape
-    print(doc_h,doc_w)
-    img_h = 0
-    img_w = 0
+    doc_h, doc_w, pixels = img.shape
 
     if (doc_w / doc_h) > (target_w / target_h):
         ratio = target_w / doc_w
@@ -21,4 +18,6 @@ def ResizeWithAspectRatio(img, target_w, target_h):
 
 
 def Resize(img, target_w, target_h):
-    return 'ds'
+    return cv2.resize(img, (target_w, target_h), interpolation = cv2.INTER_AREA)
+
+
