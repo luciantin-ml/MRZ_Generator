@@ -52,9 +52,18 @@ text_col_w = text_w/text_cols
 
 fontpath = './helpers/fonts/OcrB Regular.ttf'
 font_code = ImageFont.truetype(fontpath, 27, layout_engine=ImageFont.LAYOUT_BASIC)
-font_small = ImageFont.truetype(fontpath, 27, layout_engine=ImageFont.LAYOUT_BASIC)
-font_normal = ImageFont.truetype(fontpath, 27, layout_engine=ImageFont.LAYOUT_BASIC)
-font_large = ImageFont.truetype(fontpath, 27, layout_engine=ImageFont.LAYOUT_BASIC)
+font_small = ImageFont.truetype(fontpath, 18, layout_engine=ImageFont.LAYOUT_BASIC)
+font_normal = ImageFont.truetype(fontpath, 24, layout_engine=ImageFont.LAYOUT_BASIC)
+font_large = ImageFont.truetype(fontpath, 35, layout_engine=ImageFont.LAYOUT_BASIC)
+
+DOCUMENT_BACKGROUNDS = [cv2.imread(file) for file in glob.glob("helpers/images/document_background/*.bmp")]
+FACES = [cv2.imread(file) for file in glob.glob("helpers/images/person/*.png")]
+
+
+def mm_to_px_gen(px_per_mm):
+    def mm_to_px(mm):
+        return round(mm*px_per_mm)
+    return mm_to_px
 
 def create_blank_test():
     img = np.zeros((doc_h, doc_w, 3), np.uint8)
@@ -90,8 +99,7 @@ def create_blank_test():
     return img
 
 def create_document_background(target_w, target_h):
-    bckg = [cv2.imread(file) for file in glob.glob("helpers/images/document_background/*.bmp")]
-    bckg = random.choice(bckg)
+    bckg = random.choice(DOCUMENT_BACKGROUNDS)
     bckg = cv2.cvtColor(bckg, cv2.COLOR_BGR2BGRA)
 
     img = np.zeros((doc_h, doc_w, 3), np.uint8)
@@ -116,10 +124,90 @@ def create_document_background(target_w, target_h):
     return img
 
 
+def add_document_person_image(img,mm_to_px,text):
+    face = random.choice(FACES)
+    face = cv2.cvtColor(face, cv2.COLOR_RGB2BGR)
+    face = Resize(face, round(mm_to_px(image_w)), round(mm_to_px(image_h/2)) )
+    # DEBUG BB
+    # img = cv2.rectangle(img, (mm_to_px(doc_margin),mm_to_px(image_start_y)), (mm_to_px(doc_margin+image_w), mm_to_px(image_h)), (255,255,255), -1) # image
+    font_w, font_h = font_code.getsize(text)
+
+    x_off = round(mm_to_px(doc_margin))
+    y_off = round(mm_to_px(image_start_y)) + font_h*2
+    img[y_off:y_off + face.shape[0], x_off:x_off + face.shape[1]] = face
+
+    img = Image.fromarray(img)
+    draw = ImageDraw.Draw(img)
+    draw.text((round(mm_to_px(doc_margin+image_w/2) - font_w / 2), round(mm_to_px(image_start_y)) + font_h / 2), text, font=font_normal, fill=(0, 0, 0))
+    return np.array(img)
 
 
+def add_document_heding(img,mm_to_px,text):
+    # img = cv2.rectangle(img, (mm_to_px(doc_margin), mm_to_px(doc_margin)), (mm_to_px(doc_w - doc_margin), mm_to_px(doc_margin + 8)), (255, 255, 255),-1)  # heading DEBUG
+    font_w, font_h = font_code.getsize(text)
+    img = Image.fromarray(img)
+    draw = ImageDraw.Draw(img)
+    draw.text((round(mm_to_px(doc_w/2 - doc_margin)-font_w/2), round(mm_to_px(doc_margin))+font_h/2), text, font=font_large, fill=(0, 0, 0))
+    return np.array(img)
 
-def create_document(target_w, target_h, MRZ_code, MRZ_data, settings):
+
+def add_document_col(img, mm_to_px, offset_multiplier, text_arr):
+    # for i in range(text_cols):
+    #     top_l = (
+    #         mm_to_px(round(text_row_start_x+text_col_w*i+margin_betw_text_cols*i)),
+    #         mm_to_px(round(text_row_start_y))
+    #     )
+    #     bot_r = (
+    #         mm_to_px(round(text_row_start_x+text_col_w*(i+1))),
+    #         mm_to_px(round(text_h))
+    #     )
+    #     img = cv2.rectangle(img, top_l, bot_r, (20*i, 0, 255), -1)  # text
+    #     for j in range(text_rows):
+    #         top_l = (
+    #             mm_to_px(round(text_row_start_x + text_col_w * i + margin_betw_text_cols * i)),
+    #             mm_to_px(round(text_row_start_y + text_row_h * j + margin_betw_text_rows * (j+1)))
+    #         )
+    #         bot_r = (
+    #             mm_to_px(round(text_row_start_x + text_col_w * (i + 1))),
+    #             mm_to_px(round(text_row_start_y + text_row_h * (j + 1) + margin_betw_text_rows * (j+1)))
+    #         )
+    #         img = cv2.rectangle(img, top_l, bot_r, (255, 0, 255), -1)  # text
+
+    img = Image.fromarray(img)
+    draw = ImageDraw.Draw(img)
+    # draw.text((round(mm_to_px(doc_w / 2 - doc_margin) - font_w / 2), round(mm_to_px(doc_margin)) + font_h / 2), text, font=font_code, fill=(0, 0, 0))
+
+    for i in range(text_cols):
+        # top_l = (
+        #     mm_to_px(round(text_row_start_x+text_col_w*i+margin_betw_text_cols*i)),
+        #     mm_to_px(round(text_row_start_y))
+        # )
+        # bot_r = (
+        #     mm_to_px(round(text_row_start_x+text_col_w*(i+1))),
+        #     mm_to_px(round(text_h))
+        # )
+        # img = cv2.rectangle(img, top_l, bot_r, (20*i, 0, 255), -1)  # BB   TEST
+        for j in range(text_rows):
+            top_l = (
+                mm_to_px(round(text_row_start_x + text_col_w * i + margin_betw_text_cols * i)),
+                mm_to_px(round(text_row_start_y + text_row_h * j + margin_betw_text_rows * (j+1)))
+            )
+            bot_r = (
+                mm_to_px(round(text_row_start_x + text_col_w * (i + 1))),
+                mm_to_px(round(text_row_start_y + text_row_h * (j + 1) + margin_betw_text_rows * (j+1)))
+            )
+            # img = cv2.rectangle(img, top_l, bot_r, (255, 0, 255), -1)  # BB   TEST
+            text = text_arr[i][j]
+            font_w, font_h = font_code.getsize(str(text[0]))
+            # print(text)
+            # font_w_, font_h_ = font_code.getsize('A')
+            draw.text( (round(top_l[0] + doc_margin ), round(top_l[1] + font_h / 2)), str(text[0]), font=font_small, fill=(0, 0, 0))
+            draw.text( (round(top_l[0] + doc_margin ), round(top_l[1] + font_h + 5)), str(text[1]), font=font_normal, fill=(0, 0, 0))
+
+    return np.array(img)
+
+
+def create_document(target_w, target_h, MRZ_code, MRZ_data):
 
     img = create_document_background(target_w, target_h)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -127,7 +215,7 @@ def create_document(target_w, target_h, MRZ_code, MRZ_data, settings):
 
     mask = np.zeros((img_h, img_w, 1), np.uint8)
     px_per_mm = img_w / doc_w
-
+    px_per_mm_f = mm_to_px_gen(px_per_mm)
     # MRZ POS
     x1 = mrz_w_margin_lef
     y1 = doc_h - mrz_h_margin_bot - mrz_h
@@ -163,11 +251,37 @@ def create_document(target_w, target_h, MRZ_code, MRZ_data, settings):
     # img = cv2.rectangle(img, (round(3.6 * px_per_mm), round(y1 * px_per_mm) + 15), (round(3.6 * px_per_mm)+font_w, round(y1 * px_per_mm) + 15+font_h),(0,0,0), 2)
     # img = cv2.rectangle(img, (round(3.6 * px_per_mm), round(y1 * px_per_mm) + 55 + 3), (round(3.6 * px_per_mm)+font_w, round(y1 * px_per_mm) + 55 + 3 +font_h),(0,0,0), 2)
 
-    mask = cv2.rectangle(mask, (round(3.6 * px_per_mm), round(y1 * px_per_mm) + 15), (round(3.6 * px_per_mm)+font_w, round(y1 * px_per_mm) + 15+font_h), (1), -1)
-    mask = cv2.rectangle(mask, (round(3.6 * px_per_mm), round(y1 * px_per_mm) + 55 + 3), (round(3.6 * px_per_mm)+font_w, round(y1 * px_per_mm) + 55 + 3 +font_h), (1), -1)
+    # MASK SEPARATE
+    # mask = cv2.rectangle(mask, (round(3.6 * px_per_mm), round(y1 * px_per_mm) + 15), (round(3.6 * px_per_mm)+font_w, round(y1 * px_per_mm) + 15+font_h), (1), -1)
+    # mask = cv2.rectangle(mask, (round(3.6 * px_per_mm), round(y1 * px_per_mm) + 55 + 3), (round(3.6 * px_per_mm)+font_w, round(y1 * px_per_mm) + 55 + 3 +font_h), (1), -1)
 
+    mask = cv2.rectangle(mask, (round(3.6 * px_per_mm), round(y1 * px_per_mm) + 15), (round(3.6 * px_per_mm)+font_w, round(y1 * px_per_mm) + 55 + 3 +font_h), (1), -1)
 
-    return img, mask
+    MRZ_BB = [round(3.6 * px_per_mm), round(y1 * px_per_mm) + 15, round(3.6 * px_per_mm)+font_w, round(y1 * px_per_mm) + 55 + 3 +font_h]
+
+    document_text = [
+        [
+            ['Type',MRZ_data.document_type],
+            ['Surname',MRZ_data.surname],
+            ['Given name',MRZ_data.name],
+            ['Nationality',MRZ_data.nationality],
+        ],
+        [
+            ['Country', MRZ_data.country],
+            ['Birth date', MRZ_data.birth_date],
+            ['Expiry date', MRZ_data.expiry_date],
+            ['Sex', MRZ_data.sex],
+        ],
+    ]
+
+    random.shuffle(document_text[0])
+    random.shuffle(document_text[1])
+
+    img = add_document_heding(img, px_per_mm_f,str(MRZ_data.country))
+    img = add_document_person_image(img, px_per_mm_f,'Passport')
+    img = add_document_col(img,px_per_mm_f,1,document_text)
+
+    return img, mask, MRZ_BB
 
 
 

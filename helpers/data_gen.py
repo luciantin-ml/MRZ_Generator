@@ -36,7 +36,7 @@ def radnom_date():
     return res
 
 def random_sex():
-    sex = 'MFX'
+    sex = 'MF'
     return random.choice(sex)
 
 def create_person():
