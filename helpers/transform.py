@@ -56,21 +56,19 @@ def random_transform(target_img, target_mask):
     # background = DOCUMENT_BACKGROUNDS[1]
     background = cv2.cvtColor(background, cv2.COLOR_BGR2RGBA)
 
-    target_x = round(random.random()*100)
-    target_y = round(random.random()*300)
-    bckg_padding_x = round(random.random()*100) + 200
-    bckg_padding_y = round(random.random()*100) + 200
+    target_x = round(random.random() * 100)
+    target_y = round(random.random() * 300)
+    bckg_padding_x = round(random.random() * 100) + 200
+    bckg_padding_y = round(random.random() * 100) + 200
     # target_img = add_background_rgba(target_img, background, target_x, target_y, bckg_padding_x, bckg_padding_y)
-    target_img = add_background_rgba(target_img, background, target_x,target_y,bckg_padding_x,bckg_padding_y)
+    target_img = add_background_rgba(target_img, background, target_x, target_y, bckg_padding_x, bckg_padding_y)
 
     b_shape = target_img.shape
-
 
     target_mask_h = b_shape[0]
     target_mask_w = b_shape[1]
 
-
-    background_for_mask = np.zeros((target_mask_h, target_mask_w), np.uint8)
+    background_for_mask = np.zeros((target_mask_h, target_mask_w, 1), np.uint8)
     # mask_padding_top = 0
     # mask_padding_bot = 0
     # mask_padding_left = 0
@@ -84,16 +82,25 @@ def random_transform(target_img, target_mask):
     #                           cv2.BORDER_CONSTANT, value=[0])
     # target_mask = cv2.bitwise_or(background_for_mask, target_mask)
     # target_mask =
+    # print(background_for_mask.shape, target_mask.shape)
+
     y1, y2 = target_y, target_y + target_mask.shape[0]
     x1, x2 = target_x, target_x + target_mask.shape[1]
-    # background_for_mask[y1:y2, x1:x2] = target_mask
-    return target_img, background_for_mask
+    background_for_mask[y1:y2, x1:x2] = target_mask
 
+    return target_img, background_for_mask
 
 # def skew_image(image, )
 #
 # img = cv2.imread('helpers/../result/images/1.png')
 # mask = cv2.imread('helpers/../result/masks/1.bmp',-1)
+#
+# plt.imshow(mask)
+# plt.show()
+# # print(img.shape)
+# plt.imshow(img)
+# plt.show()
+#
 # # print(mask)
 # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGBA)
 #
@@ -107,7 +114,6 @@ def random_transform(target_img, target_mask):
 # plt.show()
 
 
-
 # img = rotate_image(img, 45)
 # img2 = random.choice(DOCUMENT_BACKGROUNDS)
 # img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2RGBA)
@@ -117,5 +123,3 @@ def random_transform(target_img, target_mask):
 # print(bc.shape)
 # plt.imshow(bc)
 # plt.show()
-
-

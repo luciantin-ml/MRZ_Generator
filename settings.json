@@ -1,22 +1,3 @@
 {
-  "sample_size":10,
-  "image_w": 800,
-  "image_h": 600,
-  "background_margin": 30,
-
-  "sample_warp_perspective_ratio": 0.05,
-  "sample_warp_perspective_delta": 5,
-  "_comment_sample_warp_perspective_delta": "corners of image +/- delta",
-
-  "sample_skew_ratio": 0.05,
-  "sample_skew_angle_min_y": 0,
-  "sample_skew_angle_max_y": 90,
-  "sample_skew_angle_min_x": 0,
-  "sample_skew_angle_max_x": 90,
-
-  "sample_translation_ratio": 0.05,
-  "sample_translation_min": 0,
-  "sample_translation_max": 20
-
-
+  "sample_size":20
 }
